@@ -17,6 +17,11 @@ async function bootstrap() {
 
   const config = getConfig();
 
+  // Atrás do Traefik (e do proxy do Next): usa o IP real nos limites de requisição.
+  if (config.NODE_ENV === 'production') {
+    (app.getHttpAdapter().getInstance() as { set: (name: string, value: unknown) => void }).set('trust proxy', 1);
+  }
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

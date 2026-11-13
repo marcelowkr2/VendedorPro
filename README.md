@@ -71,11 +71,22 @@ O Compose usa o modo de desenvolvimento com código montado do host e recarga au
   e-mail. Cadastro não verifica o endereço de e-mail. Planos, assinaturas e cobranças
   ainda não estão implementados neste fluxo.
 
-O Compose aplica o schema com `prisma db push` apenas para desenvolvimento. Para uma
-implantação existente, planeje e aplique uma migração Prisma revisada para a coluna
-`User.tokenVersion` antes de atualizar a API; não use `db push` como migração de produção.
+O Compose local aplica o schema com `prisma db push`. A configuração atual da VPS também
+executa esse comando ao iniciar a API; o deploy automático bloqueia alterações no schema,
+mas isso não substitui migrações revisadas e backups para produção.
 Esta configuração local não está pronta para produção: ainda são necessárias revisão de
 segurança, recuperação/verificação por e-mail e infraestrutura e segredos adequados.
+
+### Atualização na VPS
+
+Na VPS configurada para `vendedorpro.infosystema.cloud`, um timer systemd consulta a
+branch `master` pública a cada dois minutos. Commits novos são construídos e publicados
+automaticamente; falhas de build preservam a versão em execução e falhas na verificação
+HTTP tentam restaurar as imagens anteriores. Alterações no schema Prisma são bloqueadas
+para revisão e migração manual. O monitoramento pode ser consultado com
+`systemctl status vendedorpro-deploy.timer` e `journalctl -u vendedorpro-deploy.service`.
+O banco e `.env.production` permanecem fora dos diretórios de releases. Não há backup
+automático do banco; providencie backups independentes antes de operar com dados reais.
 
 ### Rodar sem Docker
 

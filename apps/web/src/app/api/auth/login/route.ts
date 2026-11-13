@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { setAuthCookies } from '../../../../lib/server-auth-cookies';
+import { forwardedHeaders } from '../../../../lib/forwarded-headers';
 
 const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
@@ -8,7 +9,7 @@ export async function POST(request: Request) {
   try {
     upstream = await fetch(`${apiUrl}/api/v1/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: forwardedHeaders(request),
       body: JSON.stringify(await request.json()),
       cache: 'no-store',
     });

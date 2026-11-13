@@ -1,0 +1,90 @@
+# Produção atrás do Traefik do servidor (rede `dokploy-network`, certificados Let's Encrypt).
+# Uso: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+name: vendedorpro
+
+services:
+  vendedorpro-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vendedorpro
+      POSTGRES_USER: vendedorpro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - vendedorpro-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vendedorpro -d vendedorpro']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - internal
+
+  vendedorpro-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://vendedorpro:${POSTGRES_PASSWORD}@vendedorpro-db:5432/vendedorpro
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET}
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      SALT_ROUNDS: 12
+      RATE_LIMIT: 60
+      CORS_ORIGIN: https://${DOMAIN:?defina DOMAIN}
+      PORT_API: 4000
+      NODE_ENV: production
+    depends_on:
+      vendedorpro-db:
+        condition: service_healthy
+    networks:
+      - internal
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.routers.vendedorpro-api.entrypoints=websecure
+      - traefik.http.routers.vendedorpro-api.rule=Host(`${DOMAIN}`) && PathPrefix(`/api/v1`)
+      - traefik.http.routers.vendedorpro-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.vendedorpro-api.priority=100
+      - traefik.http.services.vendedorpro-api.loadbalancer.server.port=4000
+
+  vendedorpro-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      target: web
+      args:
+        NEXT_PUBLIC_API_URL: https://${DOMAIN}
+    restart: unless-stopped
+    environment:
+      INTERNAL_API_URL: http://vendedorpro-api:4000
+      PORT_WEB: 3000
+      NODE_ENV: production
+    depends_on:
+      - vendedorpro-api
+    networks:
+      - internal
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=dokploy-network
+      - traefik.http.middlewares.vendedorpro-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.vendedorpro-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.vendedorpro-http.entrypoints=web
+      - traefik.http.routers.vendedorpro-http.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.vendedorpro-http.middlewares=vendedorpro-redirect
+      - traefik.http.routers.vendedorpro-web.entrypoints=websecure
+      - traefik.http.routers.vendedorpro-web.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.vendedorpro-web.tls.certresolver=letsencrypt
+      - traefik.http.services.vendedorpro-web.loadbalancer.server.port=3000
+
+networks:
+  internal:
+  dokploy-network:
+    external: true
+
+volumes:
+  vendedorpro-pg:

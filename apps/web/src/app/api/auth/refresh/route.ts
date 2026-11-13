@@ -1,10 +1,11 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { clearAuthCookies, setAuthCookies } from '../../../../lib/server-auth-cookies';
+import { forwardedHeaders } from '../../../../lib/forwarded-headers';
 
 const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
-export async function POST() {
+export async function POST(request: Request) {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get('vp_refresh_token')?.value;
   if (!refreshToken) {
@@ -17,7 +18,7 @@ export async function POST() {
   try {
     upstream = await fetch(`${apiUrl}/api/v1/auth/refresh`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: forwardedHeaders(request),
       body: JSON.stringify({ refreshToken }),
       cache: 'no-store',
     });
