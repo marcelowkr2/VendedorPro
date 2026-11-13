@@ -1,0 +1,9 @@
+[Unit]
+Description=Atualização do VendedorPro a partir do GitHub
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /opt/vendedorpro-deploy/deploy-vps.sh
+TimeoutStartSec=45min

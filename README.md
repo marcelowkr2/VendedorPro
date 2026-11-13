@@ -87,6 +87,8 @@ para revisão e migração manual. O monitoramento pode ser consultado com
 `systemctl status vendedorpro-deploy.timer` e `journalctl -u vendedorpro-deploy.service`.
 O banco e `.env.production` permanecem fora dos diretórios de releases. Não há backup
 automático do banco; providencie backups independentes antes de operar com dados reais.
+O script e as unidades systemd instalados na VPS não se atualizam automaticamente:
+revise e instale alterações neles separadamente.
 
 ### Rodar sem Docker
 

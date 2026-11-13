@@ -1,0 +1,10 @@
+[Unit]
+Description=Verificação periódica de atualizações do VendedorPro
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+Unit=vendedorpro-deploy.service
+
+[Install]
+WantedBy=timers.target
