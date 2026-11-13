@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vendedorpro
+      POSTGRES_USER: vendedorpro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vendedorpro_local}
+    ports:
+      - '5432:5432'
+    volumes:
+      - vendedorpro-pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U vendedorpro -d vendedorpro']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    image: vendedorpro-local:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://vendedorpro:${POSTGRES_PASSWORD:-vendedorpro_local}@postgres:5432/vendedorpro
+      JWT_SECRET: ${JWT_SECRET:-local-development-secret-change-before-deploy}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      SALT_ROUNDS: ${SALT_ROUNDS:-10}
+      RATE_LIMIT: ${RATE_LIMIT:-60}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      PORT_API: 4000
+      NODE_ENV: development
+    command:
+      - sh
+      - -c
+      - pnpm --filter @vendedorpro/db db:push && pnpm --filter @vendedorpro/db db:seed && pnpm --filter @vendedorpro/api dev
+    ports:
+      - '4000:4000'
+    volumes:
+      - .:/app
+      - vendedorpro-node-modules:/app/node_modules
+      - vendedorpro-api-node-modules:/app/apps/api/node_modules
+      - vendedorpro-web-node-modules:/app/apps/web/node_modules
+      - vendedorpro-db-node-modules:/app/packages/db/node_modules
+      - vendedorpro-config-node-modules:/app/packages/config/node_modules
+      - vendedorpro-shared-node-modules:/app/packages/shared/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    image: vendedorpro-local:dev
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      INTERNAL_API_URL: http://api:4000
+      PORT_WEB: 3000
+      NODE_ENV: development
+    command: pnpm --filter @vendedorpro/web dev
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - vendedorpro-node-modules:/app/node_modules
+      - vendedorpro-api-node-modules:/app/apps/api/node_modules
+      - vendedorpro-web-node-modules:/app/apps/web/node_modules
+      - vendedorpro-db-node-modules:/app/packages/db/node_modules
+      - vendedorpro-config-node-modules:/app/packages/config/node_modules
+      - vendedorpro-shared-node-modules:/app/packages/shared/node_modules
+    depends_on:
+      - api
+
+volumes:
+  vendedorpro-pg:
+  vendedorpro-node-modules:
+  vendedorpro-api-node-modules:
+  vendedorpro-web-node-modules:
+  vendedorpro-db-node-modules:
+  vendedorpro-config-node-modules:
+  vendedorpro-shared-node-modules:

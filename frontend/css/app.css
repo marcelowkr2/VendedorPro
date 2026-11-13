@@ -1,0 +1,32 @@
+* { box-sizing: border-box; }
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+.table-wrap { overflow-x:auto; }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:8px; }
+::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+.badge { font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; }
+.badge-pendente { background:#fef3c7; color:#92400e; }
+.badge-pago { background:#dcfce7; color:#166534; }
+.badge-cancelado { background:#fee2e2; color:#991b1b; }
+.badge-enviado { background:#dbeafe; color:#1e40af; }
+.badge-entregue { background:#f3e8ff; color:#6b21a8; }
+.badge-vendas { background:#e0e7ff; color:#3730a3; }
+.badge-admin { background:#fce7f3; color:#9d174d; }
+.fade-in { animation: fade .25s ease; }
+@keyframes fade { from { opacity:0; transform:translateY(6px);} to {opacity:1; transform:none;} }
+.form-input { width:100%; border:1px solid #cbd5e1; border-radius:.5rem; padding:.5rem .75rem; outline:none; font-size:.875rem; }
+.form-input:focus { border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
+.form-label { display:block; font-size:.8rem; font-weight:600; color:#475569; margin-bottom:.25rem; }
+.form-textarea { width:100%; border:1px solid #cbd5e1; border-radius:.5rem; padding:.5rem .75rem; outline:none; font-size:.875rem; resize:vertical; }
+.btn { display:inline-flex; align-items:center; gap:.5rem; padding:.5rem 1rem; border-radius:.5rem; font-weight:600; font-size:.875rem; cursor:pointer; border:none; transition:all .15s; }
+.btn-primary { background:#4f46e5; color:white; } .btn-primary:hover { background:#4338ca; }
+.btn-success { background:#16a34a; color:white; } .btn-success:hover { background:#15803d; }
+.btn-danger { background:#dc2626; color:white; } .btn-danger:hover { background:#b91c1c; }
+.btn-ghost { background:#f1f5f9; color:#334155; } .btn-ghost:hover { background:#e2e8f0; }
+.btn-sm { padding:.35rem .75rem; font-size:.8rem; }
+.card { background:white; border:1px solid #e2e8f0; border-radius:1rem; padding:1.25rem; }
+.stat-card { background:linear-gradient(135deg,#6366f1,#8b5cf6); color:white; border-radius:1rem; padding:1.25rem; }
+.stat-card.green { background:linear-gradient(135deg,#10b981,#059669); }
+.stat-card.amber { background:linear-gradient(135deg,#f59e0b,#d97706); }
+.stat-card.red { background:linear-gradient(135deg,#ef4444,#dc2626); }
+.stat-card.slate { background:linear-gradient(135deg,#475569,#334155); }

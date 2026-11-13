@@ -1,0 +1,318 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  priceCents Int
+  limits    Json     @default("{}")
+  features  Json     @default("[]")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  subscriptions Subscription[]
+}
+
+model Tenant {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  users         TenantUser[]
+  subscriptions Subscription[]
+  products      Product[]
+  customers     Customer[]
+  categories    Category[]
+  brands        Brand[]
+  paymentConditions PaymentCondition[]
+  documentSequences DocumentSequence[]
+  stockMovements StockMovement[]
+  quotes        Quote[]
+  orders        Order[]
+  paymentsReceivable AccountsReceivable[]
+}
+
+model Subscription {
+  id             String   @id @default(uuid())
+  tenantId       String
+  planId         String
+  status         String   @default("trial")
+  trialEnd       DateTime?
+  currentPeriodEnd DateTime?
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  plan           Plan     @relation(fields: [planId], references: [id])
+  @@unique([tenantId])
+}
+
+model DocumentSequence {
+  id         String   @id @default(uuid())
+  tenantId   String
+  year       Int
+  kind       String
+  value      Int      @default(0)
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  @@unique([tenantId, year, kind])
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  permissions RolePermission[]
+}
+
+model Permission {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  name          String
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  roles         RolePermission[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role     @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id                 String   @id @default(uuid())
+  name               String
+  email              String   @unique
+  passwordHash       String
+  role               String   @default("vendedor")
+  active             Boolean  @default(true)
+  tokenVersion       Int      @default(0)
+  loginAttempts      Int      @default(0)
+  lockedUntil        DateTime?
+  resetPasswordToken String?
+  resetPasswordExpires DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  tenants            TenantUser[]
+  salesOrders        Order[]
+  quotes             Quote[]
+}
+
+model TenantUser {
+  id        String   @id @default(uuid())
+  userId    String
+  tenantId  String
+  role      String   @default("vendedor")
+  user      User     @relation(fields: [userId], references: [id])
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  @@unique([userId, tenantId])
+}
+
+model Category {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  products   Product[]
+  @@unique([tenantId, name])
+}
+
+model Brand {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  products   Product[]
+  @@unique([tenantId, name])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  code        String
+  barcode     String?
+  priceCents  Int      @default(0)
+  costCents   Int      @default(0)
+  stock       Int      @default(0)
+  minStock    Int      @default(0)
+  unit        String   @default("UN")
+  categoryId  String?
+  brandId     String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
+  brand       Brand?   @relation(fields: [brandId], references: [id])
+  stockMovements StockMovement[]
+  orderItems  OrderItem[]
+  quoteItems  QuoteItem[]
+  @@unique([tenantId, code])
+  @@unique([tenantId, barcode])
+}
+
+model Customer {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  cpfCnpj     String?
+  email       String?
+  phone       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  orders      Order[]
+  quotes      Quote[]
+  accountsReceivable AccountsReceivable[]
+  @@unique([tenantId, cpfCnpj])
+}
+
+model StockMovement {
+  id         String   @id @default(uuid())
+  productId  String
+  tenantId   String
+  type       String   @default("in")
+  quantity   Int      @default(0)
+  reason     String?
+  createdAt  DateTime @default(now())
+  product    Product  @relation(fields: [productId], references: [id])
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+model Quote {
+  id            String   @id @default(uuid())
+  tenantId      String
+  customerId    String?
+  sellerId      String?
+  number        String
+  status        String   @default("draft")
+  subtotalCents Int      @default(0)
+  discountCents Int      @default(0)
+  totalCents    Int      @default(0)
+  active        Boolean  @default(true)
+  validUntil    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  seller        User?    @relation(fields: [sellerId], references: [id])
+  items         QuoteItem[]
+  @@unique([tenantId, number])
+}
+
+model QuoteItem {
+  id         String   @id @default(uuid())
+  quoteId    String
+  productId  String
+  quantity   Int      @default(1)
+  priceCents Int      @default(0)
+  quote      Quote    @relation(fields: [quoteId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  tenantId      String
+  customerId    String?
+  sellerId      String?
+  number        String
+  status        String   @default("separating")
+  subtotalCents Int      @default(0)
+  discountCents Int      @default(0)
+  totalCents    Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenant        Tenant   @relation(fields: [tenantId], references: [id])
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  seller        User?    @relation(fields: [sellerId], references: [id])
+  items         OrderItem[]
+  receivables   AccountsReceivable[]
+  @@unique([tenantId, number])
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  productId  String
+  quantity   Int      @default(1)
+  priceCents Int      @default(0)
+  order      Order    @relation(fields: [orderId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model PaymentCondition {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  days      Int      @default(0)
+  installments Int  @default(1)
+  active    Boolean  @default(true)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  receivables AccountsReceivable[]
+  @@unique([tenantId, name])
+}
+
+model AccountsReceivable {
+  id             String   @id @default(uuid())
+  tenantId       String
+  customerId     String?
+  orderId        String?
+  paymentConditionId String?
+  totalCents     Int      @default(0)
+  receivedCents  Int      @default(0)
+  status         String   @default("pending")
+  dueDate        DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  customer       Customer? @relation(fields: [customerId], references: [id])
+  order          Order?   @relation(fields: [orderId], references: [id])
+  paymentCondition PaymentCondition? @relation(fields: [paymentConditionId], references: [id])
+  payments       Payment[]
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  accountsReceivableId String
+  amountCents       Int      @default(0)
+  method            String   @default("pix")
+  paidAt            DateTime @default(now())
+  accountsReceivable AccountsReceivable @relation(fields: [accountsReceivableId], references: [id])
+}
+
+model SalesGoal {
+  id         String   @id @default(uuid())
+  tenantId   String
+  sellerId   String?
+  targetCents Int     @default(0)
+  startDate  DateTime
+  endDate    DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  tenantId  String
+  userId    String?
+  action    String
+  entityType String
+  entityId  String
+  oldValues Json?
+  newValues Json?
+  createdAt DateTime @default(now())
+}

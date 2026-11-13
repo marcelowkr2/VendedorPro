@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "noEmit": false,
+    "incremental": false,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "paths": {
+      "@vendedorpro/shared": ["../../packages/shared/src"],
+      "@vendedorpro/shared/*": ["../../packages/shared/src/*"],
+      "@vendedorpro/config": ["../../packages/config/src"],
+      "@vendedorpro/config/*": ["../../packages/config/src/*"],
+      "@vendedorpro/db": ["../../packages/db/src"],
+      "@vendedorpro/db/*": ["../../packages/db/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "test"]
+}

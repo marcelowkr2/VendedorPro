@@ -1,0 +1,13 @@
+{
+  "name": "saas-vendas-backend",
+  "version": "1.0.0",
+  "description": "SaaS para vendedores - backend (Node.js nativo, sem dependências)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {},
+  "engines": { "node": ">=18" }
+}
