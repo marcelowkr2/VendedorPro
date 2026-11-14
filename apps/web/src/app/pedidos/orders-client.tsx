@@ -8,6 +8,8 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/card';
 import { formatBRL } from '../../lib/utils';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 export function OrdersClient({ token }: { token: string }) {
   const tenant = useAuthStore((s) => s.currentTenant);
@@ -16,6 +18,7 @@ export function OrdersClient({ token }: { token: string }) {
     customerId: '',
     items: [{ productId: '', quantity: '1', priceCents: '' }],
   });
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   const { data: orders } = useQuery({
     queryKey: ['orders', tenant?.tenantId],
@@ -60,6 +63,25 @@ export function OrdersClient({ token }: { token: string }) {
         priceCents: Math.round(Number(i.priceCents) * 100),
       })),
     });
+  };
+
+  const downloadPdf = async (id: string, number: string) => {
+    setDownloading(id);
+    try {
+      const response = await api.get<Blob>(`/api/v1/orders/${id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (error) {
+      if (!axios.isAxiosError(error)) toast.error('Não foi possível baixar o PDF.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   if (!tenant) return <div className="text-slate-500">Selecione uma empresa.</div>;
@@ -167,14 +189,14 @@ export function OrdersClient({ token }: { token: string }) {
                   <td>{formatBRL(o.totalCents)}</td>
                   <td>
                     <span className={`badge badge-${o.status}`}>{o.status}</span>{' '}
-                    <a
-                      href={`/api/v1/orders/${o.id}/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-brand-600 underline decoration-brand-300 hover:decoration-brand-600 ml-1"
+                    <button
+                      type="button"
+                      onClick={() => downloadPdf(o.id, o.number)}
+                      disabled={downloading !== null}
+                      className="text-xs text-brand-600 underline decoration-brand-300 hover:decoration-brand-600 ml-1 disabled:opacity-50"
                     >
-                      PDF
-                    </a>
+                      {downloading === o.id ? 'Gerando...' : 'PDF'}
+                    </button>
                   </td>
                   <td className="text-slate-500">{new Date(o.createdAt).toLocaleDateString('pt-BR')}</td>
                 </tr>

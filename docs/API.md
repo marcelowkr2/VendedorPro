@@ -73,6 +73,7 @@ serão tratados em etapa futura.
 | `GET /orders` | qualquer logado |
 | `POST /orders` | admin_empresa / gerente_comercial / vendedor |
 | `GET /orders/:id` | qualquer logado |
+| `GET /orders/:id/pdf` | qualquer logado; PDF autenticado com itens e valores do pedido |
 | `PATCH /orders/:id/status` | admin_empresa / gerente_comercial |
 | `DELETE /orders/:id` | admin_empresa / gerente_comercial (devolve estoque se não cancelado) |
 
@@ -81,7 +82,7 @@ serão tratados em etapa futura.
 | Endpoint | Perfil |
 | --- | --- |
 | `POST /stock/adjust` | admin_empresa / gerente_comercial |
-| `GET /stock/movements` | qualquer logado |
+| `GET /stock/movements` | qualquer logado; inclui nome e código do produto |
 | `GET /reports/low-stock` | qualquer logado |
 
 ## Financeiro

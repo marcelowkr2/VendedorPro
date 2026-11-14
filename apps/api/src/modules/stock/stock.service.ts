@@ -27,7 +27,12 @@ export class StockService {
   }
 
   async movements(tenantId: string, limit = 20) {
-    return this.prisma.stockMovement.findMany({ where: { tenantId }, take: limit, orderBy: { createdAt: 'desc' } });
+    return this.prisma.stockMovement.findMany({
+      where: { tenantId, product: { tenantId } },
+      include: { product: { select: { name: true, code: true } } },
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async lowStock(tenantId: string) {

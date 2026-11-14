@@ -130,6 +130,10 @@ Na página de clientes, use **Editar** para atualizar ou limpar os dados de cont
 desativa o cadastro e o retira da carteira, sem apagar seu histórico. Clientes com pedidos,
 orçamentos ou contas a receber vinculados não podem ser excluídos.
 
+Na página de pedidos, **PDF** baixa o documento com cliente, itens, quantidades, preços,
+desconto e total. As movimentações de estoque mostram o nome do produto, e o financeiro
+exibe os status dos recebíveis em português.
+
 ## Regras de Ouro
 
 1. **Centavos (`Cents`)**: todos os valores monetários são `Int` em centavos. Nunca use `Float`/`Decimal`.

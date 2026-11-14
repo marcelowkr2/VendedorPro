@@ -9,6 +9,13 @@ import { Input } from '../../components/ui/input';
 import { Card } from '../../components/card';
 import { formatBRL } from '../../lib/utils';
 
+const statusLabels: Record<string, string> = {
+  pending: 'Pendente',
+  partial: 'Parcial',
+  received: 'Recebido',
+  overdue: 'Vencido',
+};
+
 export function FinanceClient({ token }: { token: string }) {
   const tenant = useAuthStore((s) => s.currentTenant);
   const qc = useQueryClient();
@@ -44,7 +51,7 @@ export function FinanceClient({ token }: { token: string }) {
           <div key={r.id} className="border border-slate-200 rounded-xl p-4">
             <p className="text-sm text-slate-600 mb-2">{r.customer?.name || 'Cliente'}</p>
             <div className="text-lg font-bold mb-2">{formatBRL(r.totalCents)}</div>
-            <span className={`badge badge-${r.status}`}>{r.status}</span>
+            <span className={`badge badge-${r.status}`}>{statusLabels[r.status] ?? r.status}</span>
             {r.status !== 'received' && (
               <div className="mt-3 flex gap-2">
                 <Input

@@ -7,6 +7,20 @@ import {
   ValidationError,
 } from '../../common/exceptions/app.exception';
 import { audit } from '../../audit';
+import PDFDocument from 'pdfkit';
+
+const orderStatusLabels: Record<string, string> = {
+  draft: 'Rascunho',
+  open: 'Aberto',
+  approved: 'Aprovado',
+  separating: 'Em separação',
+  shipped: 'Enviado',
+  delivered: 'Entregue',
+  cancelled: 'Cancelado',
+};
+
+const formatMoney = (cents: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100).replace(/\u00a0/g, ' ');
 
 @Injectable()
 export class OrdersService {
@@ -193,32 +207,41 @@ export class OrdersService {
   }
 
   async generatePdf(tenantId: string, id: string) {
-    const o = await this.findOne(tenantId, id);
-    const lines: string[] = [
-      `VendedorPro - Pedido ${o.number}`,
-      `Cliente: ${o.customer?.name || '—'}`,
-      `Status: ${o.status}`,
-      `Total: R$ ${(o.totalCents / 100).toFixed(2)}`,
-      '',
-      'Itens:',
-      ...o.items.map((i: any) => ` - ${i.productId} qtd=${i.quantity} R$ ${(i.priceCents / 100).toFixed(2)}`),
-    ];
+    const order = await this.prisma.order.findFirst({
+      where: { id, tenantId },
+      include: {
+        customer: true,
+        items: { include: { product: { select: { name: true, code: true, tenantId: true } } } },
+      },
+    });
+    if (!order) throw new NotFoundError();
+    if ((order.customer && order.customer.tenantId !== tenantId) || order.items.some((item) => item.product.tenantId !== tenantId)) {
+      throw new ValidationError('Pedido contém dados de outra empresa');
+    }
 
-    const header = '%PDF-1.4\n';
-    const obj1 = '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n';
-    const obj2 = '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n';
-    const text = lines.join('\\n');
-    const page = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n`;
-    const stream = `4 0 obj\n<< /Length ${Buffer.byteLength(text)} >>\nstream\nBT /F1 12 Tf 50 700 Td (${text.replace(/[()\\]/g, '\\$&')}) Tj ET\nendstream\nendobj\n`;
-    const xref =
-      'xref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000066 00000 n \n0000000117 00000 n \n0000000190 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n' + Buffer.byteLength(header + obj1 + obj2 + page + stream) + '\n%%EOF\n';
-    return Buffer.concat([
-      Buffer.from(header),
-      Buffer.from(obj1),
-      Buffer.from(obj2),
-      Buffer.from(page),
-      Buffer.from(stream),
-      Buffer.from(xref),
-    ]);
+    return new Promise<Buffer>((resolve, reject) => {
+      const doc = new PDFDocument({ margin: 48, size: 'A4' });
+      const chunks: Buffer[] = [];
+      doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+      doc.fontSize(18).text(`VendedorPro - Pedido ${order.number}`);
+      doc.moveDown().fontSize(11);
+      doc.text(`Cliente: ${order.customer?.name || 'Não informado'}`);
+      doc.text(`Data: ${order.createdAt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+      doc.text(`Status: ${orderStatusLabels[order.status] ?? order.status}`);
+      doc.moveDown().fontSize(13).text('Itens');
+      doc.moveDown(0.5).fontSize(11);
+      for (const item of order.items) {
+        doc.text(`${item.product.name} (${item.product.code})`);
+        doc.text(`Quantidade: ${item.quantity}  |  Unitário: ${formatMoney(item.priceCents)}  |  Total: ${formatMoney(item.priceCents * item.quantity)}`);
+        doc.moveDown(0.5);
+      }
+      doc.moveDown(0.5);
+      doc.text(`Subtotal: ${formatMoney(order.subtotalCents)}`);
+      doc.text(`Desconto: ${formatMoney(order.discountCents)}`);
+      doc.font('Helvetica-Bold').text(`Total: ${formatMoney(order.totalCents)}`);
+      doc.end();
+    });
   }
 }

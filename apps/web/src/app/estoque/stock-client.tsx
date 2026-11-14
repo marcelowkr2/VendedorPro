@@ -127,11 +127,11 @@ export function StockClient({ token }: { token: string }) {
                   <td className="font-medium">{m.product?.name || '—'}</td>
                   <td>
                     <span className={`badge ${m.type === 'in' ? 'badge-approved' : m.type === 'out' ? 'badge-cancelled' : 'badge-pending'}`}>
-                      {m.type}
+                      {m.type === 'in' ? 'Entrada' : m.type === 'out' ? 'Saída' : m.type === 'adjustment' ? 'Ajuste' : m.type}
                     </span>
                   </td>
-                  <td className={m.type === 'in' ? 'text-emerald-600' : 'text-red-600'}>
-                    {m.type === 'in' ? '+' : '-'}{m.quantity}
+                  <td className={m.type === 'in' ? 'text-emerald-600' : m.type === 'out' ? 'text-red-600' : ''}>
+                    {m.type === 'in' ? '+' : m.type === 'out' ? '-' : ''}{m.quantity}
                   </td>
                   <td className="text-slate-500">{m.reason || '—'}</td>
                 </tr>
