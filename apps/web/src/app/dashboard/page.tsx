@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   if (!auth) redirect('/login');
   return (
     <AppShell>
-      <DashboardClient userId={auth.userId} token={auth.token} />
+      <DashboardClient />
     </AppShell>
   );
 }

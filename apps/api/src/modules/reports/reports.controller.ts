@@ -17,6 +17,12 @@ export class ReportsController {
     return this.svc.dashboard(tenantId);
   }
 
+  @Get('dashboard-performance')
+  @Permissions('REPORT_READ')
+  async dashboardPerformance(@TenantId() tenantId: string) {
+    return this.svc.dashboardPerformance(tenantId);
+  }
+
   @Get('sales-by-period')
   @Permissions('REPORT_READ')
   async salesByPeriod(@TenantId() tenantId: string) {

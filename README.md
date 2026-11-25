@@ -139,6 +139,11 @@ No cadastro de produtos, a unidade de venda identifica a medida (por exemplo, `U
 `g` ou `L`) e aparece na lista. Estoque e pedidos usam quantidades inteiras e não fazem
 conversão automática entre unidades nem aceitam frações.
 
+O dashboard apresenta os pedidos ativos, exceto cancelados, por mês de criação nos últimos
+seis meses (horário de São Paulo). Os valores representam o total dos pedidos, não
+necessariamente pagamentos recebidos; o ranking soma as quantidades por produto no período.
+Produtos, clientes e alertas de estoque consideram apenas cadastros ativos da empresa.
+
 ## Regras de Ouro
 
 1. **Centavos (`Cents`)**: todos os valores monetários são `Int` em centavos. Nunca use `Float`/`Decimal`.
