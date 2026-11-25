@@ -8,8 +8,16 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/card';
 import { formatBRL } from '../../lib/utils';
+import { fromCents, toCents } from '@vendedorpro/shared/money';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+
+interface ProductOption {
+  id: string;
+  name: string;
+  code: string;
+  priceCents: number;
+}
 
 export function OrdersClient({ token }: { token: string }) {
   const tenant = useAuthStore((s) => s.currentTenant);
@@ -45,11 +53,11 @@ export function OrdersClient({ token }: { token: string }) {
   });
 
   const items: any[] = orders?.data?.items ?? [];
-  const productsList: any[] = products?.data?.items ?? [];
+  const productsList: ProductOption[] = products?.data?.items ?? [];
   const customersList: any[] = customers?.data?.items ?? [];
 
   const subtotal = form.items.reduce(
-    (a, i) => a + (Number(i.priceCents) || 0) * (Number(i.quantity) || 0),
+    (a, i) => a + toCents(i.priceCents) * (Number(i.quantity) || 0),
     0,
   );
 
@@ -60,7 +68,7 @@ export function OrdersClient({ token }: { token: string }) {
       items: form.items.map((i) => ({
         productId: i.productId,
         quantity: Number(i.quantity),
-        priceCents: Math.round(Number(i.priceCents) * 100),
+        priceCents: toCents(i.priceCents),
       })),
     });
   };
@@ -115,14 +123,19 @@ export function OrdersClient({ token }: { token: string }) {
                     className="form-input"
                     value={item.productId}
                     onChange={(e) => {
-                      const next = [...form.items];
-                      next[idx].productId = e.target.value;
-                      setForm({ ...form, items: next });
+                      const productId = e.target.value;
+                      const product = productsList.find((p) => p.id === productId);
+                      setForm((current) => ({
+                        ...current,
+                        items: current.items.map((row, index) => index === idx
+                          ? { ...row, productId, priceCents: product ? fromCents(product.priceCents).toFixed(2) : '' }
+                          : row),
+                      }));
                     }}
                     required
                   >
                     <option value="">Produto</option>
-                    {productsList.map((p: any) => (
+                    {productsList.map((p) => (
                       <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
                     ))}
                   </select>
@@ -131,6 +144,10 @@ export function OrdersClient({ token }: { token: string }) {
                   <Input
                     type="number"
                     placeholder="Qtd"
+                    aria-label={`Quantidade do item ${idx + 1}`}
+                    min="1"
+                    step="1"
+                    required
                     value={item.quantity}
                     onChange={(e) => {
                       const next = [...form.items];
@@ -144,6 +161,9 @@ export function OrdersClient({ token }: { token: string }) {
                     type="number"
                     step="0.01"
                     placeholder="R$"
+                    aria-label={`Preço unitário do item ${idx + 1}`}
+                    min="0"
+                    required
                     value={item.priceCents}
                     onChange={(e) => {
                       const next = [...form.items];
@@ -151,6 +171,9 @@ export function OrdersClient({ token }: { token: string }) {
                       setForm({ ...form, items: next });
                     }}
                   />
+                </div>
+                <div className="col-span-12 text-right text-sm text-slate-600">
+                  Total do item: {formatBRL(toCents(item.priceCents) * (Number(item.quantity) || 0))}
                 </div>
               </div>
             ))}

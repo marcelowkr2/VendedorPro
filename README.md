@@ -133,6 +133,8 @@ orçamentos ou contas a receber vinculados não podem ser excluídos.
 Na página de pedidos, **PDF** baixa o documento com cliente, itens, quantidades, preços,
 desconto e total. As movimentações de estoque mostram o nome do produto, e o financeiro
 exibe os status dos recebíveis em português.
+Ao selecionar um produto no pedido, seu preço é preenchido automaticamente e pode ser
+editado; os totais por item e do pedido são recalculados conforme a quantidade.
 
 ## Regras de Ouro
 
