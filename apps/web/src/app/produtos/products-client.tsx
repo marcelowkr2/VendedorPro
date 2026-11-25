@@ -90,11 +90,19 @@ export function ProductsClient({ token }: { token: string }) {
             value={form.costCents}
             onChange={(e) => setForm({ ...form, costCents: e.target.value })}
           />
-          <Input
-            placeholder="Unidade"
-            value={form.unit}
-            onChange={(e) => setForm({ ...form, unit: e.target.value })}
-          />
+          <div>
+            <label htmlFor="product-unit" className="form-label">Unidade de venda</label>
+            <Input
+              id="product-unit"
+              placeholder="Ex.: UN, kg, g, L"
+              value={form.unit}
+              onChange={(e) => setForm({ ...form, unit: e.target.value })}
+              aria-describedby="product-unit-help"
+            />
+            <p id="product-unit-help" className="mt-1 text-xs text-slate-500">
+              Ex.: UN, kg, g ou L. Quantidades inteiras, sem conversão automática.
+            </p>
+          </div>
           <Input
             placeholder="Estoque inicial"
             type="number"
@@ -115,21 +123,23 @@ export function ProductsClient({ token }: { token: string }) {
                 <th className="py-2">Nome</th>
                 <th>Código</th>
                 <th>Preço</th>
+                <th>Unidade</th>
                 <th>Estoque</th>
                 <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
-                <tr><td colSpan={5} className="py-6 text-center text-slate-400">Carregando...</td></tr>
+                <tr><td colSpan={6} className="py-6 text-center text-slate-400">Carregando...</td></tr>
               ) : items.length === 0 ? (
-                <tr><td colSpan={5} className="py-6 text-center text-slate-400">Nenhum produto.</td></tr>
+                <tr><td colSpan={6} className="py-6 text-center text-slate-400">Nenhum produto.</td></tr>
               ) : (
                 items.map((p: any) => (
                   <tr key={p.id} className="border-b border-slate-100">
                     <td className="py-2 font-medium">{p.name}</td>
                     <td className="text-slate-500">{p.code}</td>
                     <td>{formatBRL(p.priceCents)}</td>
+                    <td>{p.unit}</td>
                     <td className={p.stock <= p.minStock ? 'text-red-600 font-semibold' : ''}>{p.stock}</td>
                     <td>
                       <Button size="sm" variant="ghost" onClick={() => remove.mutate(p.id)}>Excluir</Button>

@@ -135,6 +135,9 @@ desconto e total. As movimentações de estoque mostram o nome do produto, e o f
 exibe os status dos recebíveis em português.
 Ao selecionar um produto no pedido, seu preço é preenchido automaticamente e pode ser
 editado; os totais por item e do pedido são recalculados conforme a quantidade.
+No cadastro de produtos, a unidade de venda identifica a medida (por exemplo, `UN`, `kg`,
+`g` ou `L`) e aparece na lista. Estoque e pedidos usam quantidades inteiras e não fazem
+conversão automática entre unidades nem aceitam frações.
 
 ## Regras de Ouro
 
