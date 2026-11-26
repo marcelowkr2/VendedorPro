@@ -7,6 +7,7 @@ import { Permissions } from '../auth/decorators/permissions.decorator';
 import { TenantId } from '../../common/decorators/tenant-id.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { stockAdjustmentSchema } from '@vendedorpro/shared';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 @Controller('stock')
 @UseGuards(JwtAuthGuard, TenantGuard, PermissionsGuard)
@@ -15,8 +16,14 @@ export class StockController {
 
   @Post('adjust')
   @Permissions('PRODUCT_UPDATE')
-  async adjust(@TenantId() tenantId: string, @Body(new ZodValidationPipe(stockAdjustmentSchema)) body: any) {
-    return this.svc.adjust(tenantId, body);
+  async adjust(@TenantId() tenantId: string, @CurrentUser('id') userId: string, @Body(new ZodValidationPipe(stockAdjustmentSchema)) body: any) {
+    return this.svc.adjust(tenantId, body, userId);
+  }
+
+  @Get('products')
+  @Permissions('STOCK_READ')
+  async products(@TenantId() tenantId: string) {
+    return this.svc.products(tenantId);
   }
 
   @Get('movements')

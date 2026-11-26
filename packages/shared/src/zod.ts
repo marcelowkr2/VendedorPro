@@ -73,8 +73,11 @@ export const resetPasswordSchema = z.object({
 export const stockAdjustmentSchema = z.object({
   productId: z.string().min(1),
   type: z.enum(['in', 'out', 'adjustment']),
-  quantity: z.number().int().positive(),
+  quantity: z.number().int().nonnegative(),
   reason: z.string().max(500).optional(),
+}).refine((data) => data.type === 'adjustment' || data.quantity > 0, {
+  path: ['quantity'],
+  message: 'A quantidade deve ser maior que zero para entradas e saídas',
 });
 
 export const paymentInputSchema = z.object({

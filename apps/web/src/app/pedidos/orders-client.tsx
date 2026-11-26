@@ -11,6 +11,7 @@ import { formatBRL } from '../../lib/utils';
 import { fromCents, toCents } from '@vendedorpro/shared/money';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { invalidateStockQueries } from '../../lib/stock-queries';
 
 interface ProductOption {
   id: string;
@@ -48,6 +49,7 @@ export function OrdersClient({ token }: { token: string }) {
     mutationFn: (payload: any) => api.post('/api/v1/orders', payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['orders'] });
+      if (tenant) invalidateStockQueries(qc, tenant.tenantId);
       setForm({ customerId: '', items: [{ productId: '', quantity: '1', priceCents: '' }] });
     },
   });

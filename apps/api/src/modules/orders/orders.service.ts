@@ -162,6 +162,23 @@ export class OrdersService {
             },
           });
         }
+      } else if (order.status === 'cancelled' && status !== 'cancelled') {
+        for (const item of order.items) {
+          const stockUpdated = await tx.product.updateMany({
+            where: { id: item.productId, tenantId, active: true, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (stockUpdated.count !== 1) throw new InsufficientStockError();
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              tenantId,
+              type: 'out',
+              quantity: item.quantity,
+              reason: `Reativação pedido ${order.number}`,
+            },
+          });
+        }
       }
       const updated = await tx.order.findUniqueOrThrow({ where: { id } });
       await audit(tx, 'ORDER_STATUS_UPDATE', tenantId, id, order, updated);
@@ -178,7 +195,7 @@ export class OrdersService {
       if (!order) throw new NotFoundError();
 
       const deactivated = await tx.order.updateMany({
-        where: { id, tenantId, active: true },
+        where: { id, tenantId, active: true, status: order.status },
         data: { active: false },
       });
       if (deactivated.count !== 1) throw new ConflictError('O pedido foi alterado por outra operação');

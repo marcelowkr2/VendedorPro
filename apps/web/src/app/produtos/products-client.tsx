@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/card';
 import { formatBRL } from '../../lib/utils';
+import { invalidateStockQueries } from '../../lib/stock-queries';
 
 export function ProductsClient({ token }: { token: string }) {
   const tenant = useAuthStore((s) => s.currentTenant);
@@ -26,14 +27,14 @@ export function ProductsClient({ token }: { token: string }) {
   const create = useMutation({
     mutationFn: (payload: any) => api.post('/api/v1/products', payload),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['products'] });
+      if (tenant) invalidateStockQueries(qc, tenant.tenantId);
       setForm({ name: '', code: '', barcode: '', unit: 'UN', priceCents: '', costCents: '', stock: '0', categoryId: '', brandId: '' });
     },
   });
 
   const remove = useMutation({
     mutationFn: (id: string) => api.delete(`/api/v1/products/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+    onSuccess: () => { if (tenant) invalidateStockQueries(qc, tenant.tenantId); },
   });
 
   const items: any[] = data?.data?.items ?? [];

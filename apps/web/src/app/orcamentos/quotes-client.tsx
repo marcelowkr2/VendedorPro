@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/card';
 import { formatBRL } from '../../lib/utils';
+import { invalidateStockQueries } from '../../lib/stock-queries';
 
 export function QuotesClient({ token }: { token: string }) {
   const tenant = useAuthStore((s) => s.currentTenant);
@@ -42,7 +43,11 @@ export function QuotesClient({ token }: { token: string }) {
   });
   const convert = useMutation({
     mutationFn: (id: string) => api.post(`/api/v1/quotes/${id}/convert`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['quotes'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['quotes'] });
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      if (tenant) invalidateStockQueries(qc, tenant.tenantId);
+    },
   });
 
   const items: any[] = quotes?.data?.items ?? [];

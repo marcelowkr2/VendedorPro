@@ -139,6 +139,11 @@ No cadastro de produtos, a unidade de venda identifica a medida (por exemplo, `U
 `g` ou `L`) e aparece na lista. Estoque e pedidos usam quantidades inteiras e não fazem
 conversão automática entre unidades nem aceitam frações.
 
+Em **Estoque**, o saldo atual lista produtos ativos; o histórico mantém as movimentações
+mesmo após a desativação do produto. Uma venda reduz o saldo e o cancelamento ou exclusão
+do pedido o devolve. Entrada e saída alteram a quantidade; ajuste define o saldo final,
+inclusive zero. Produtos com histórico comercial não podem ser excluídos.
+
 O dashboard apresenta os pedidos ativos, exceto cancelados, por mês de criação nos últimos
 seis meses (horário de São Paulo). Os valores representam o total dos pedidos, não
 necessariamente pagamentos recebidos; o ranking soma as quantidades por produto no período.
